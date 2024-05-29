@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-model = YOLO(task="detect",model="./cucum_label.pt")
+model_num = YOLO(task="detect",model="./cucum_label.pt")
+model_label = YOLO(task="detect",model="./cucum_label.pt")
 # reader = easyocr.Reader(['en'])
 endpoint = os.environ['COMPUTER_VISION_ENDPOINT']
 subscription_key = os.environ['COMPUTER_VISION_KEY']
@@ -47,47 +48,50 @@ class CreateCSVClass:
             shutil.rmtree(self.croped_label_dir)
     
     def create_csv(self):
-        self.clean_up()
         dt_now = datetime.datetime.now()
 
         for i,img_path in enumerate(self.img_file_list):
+
+            self.clean_up()
+
             print("now index is",i)
             img = cv2.imread(img_path)
             img_PIL = Image.open(img_path)
 
             # ******* YOLO v8 ********
-            ObjectDetection_results = model.predict(img,project="Runs_cucumber",name="predict",exist_ok=False,conf=0.5,save=True)
-            DetectLabel = model.predict(img,project="Runs_croped_label",name="predict",exist_ok=False,conf=0.5,save_crop=True,classes=1)
+            ObjectDetection_results = model_num.predict(img,project="Runs_cucumber",name="predict",exist_ok=False,conf=0.5,save=True,classes=0)
+            DetectLabel = model_label.predict(img,project="Runs_croped_label",name="pred",exist_ok=False,conf=0.5,save_crop=True,classes=1)
+
             #きゅうりの本数をリストに格納
             for result in ObjectDetection_results:
                 self.detectNumList.append(len(result))
             # ******* YOLO v8 ********
             
             # ******* azure_readAPI　********
-            if i == 0:
-                with open(self.croped_label_dir + f"/predict/crops/label/image0.jpg", 'rb') as image_file:
-                    image_data = image_file.read()
+            #ラベルが検出されているかどうか
+            if len(DetectLabel[0]) == 0:
+                dummy_detectString = "000000"
+                self.detectStringList.append(dummy_detectString)
             else:
-                with open(self.croped_label_dir + f"/predict{i+1}/crops/label/image0.jpg", 'rb') as image_file:
-                    image_data = image_file.read()
-
-            response = requests.post(
-            url=text_recognition_url,
-            headers=headers,
-            data=image_data
-            )
-            response.raise_for_status()
-            response = response.json()
-            OCR_results = response["readResult"]["content"]
-            OCR_results = OCR_results.replace('\n', '')
-            detectString = ""
-            
-            for result in OCR_results:
-                n = result
-                detectString += n
-            # detectString = "000000"
-            self.detectStringList.append(detectString)
-            print("detectString",detectString)
+                
+                with open(self.croped_label_dir + f"/pred/crops/label/image0.jpg", 'rb') as image_file:
+                        image_data = image_file.read()
+                response = requests.post(
+                url=text_recognition_url,
+                headers=headers,
+                data=image_data
+                )
+                response.raise_for_status()
+                response = response.json()
+                OCR_results = response["readResult"]["content"]
+                OCR_results = OCR_results.replace('\n', '')
+                detectString = ""
+                
+                for result in OCR_results:
+                    n = result
+                    detectString += n
+                self.detectStringList.append(detectString)
+                print("detectString",detectString)
             # ******* azure_readAPI　********
 
             exif_data = img_PIL._getexif()

@@ -51,12 +51,15 @@ class CreateNumCsv:
             img_PIL = Image.open(img_path)
 
             # ******* YOLO v8 ********
-            ObjectDetection_results = model.predict(img,project="Runs_cucumber",name="predict",exist_ok=False,conf=0.5,save=True)
+            ObjectDetection_results = model.predict(img,project="Runs_cucumber",name="predict",exist_ok=False,conf=0.5,save=True,classes=0)
             LabelDetection_result = model.predict(img,project="Runs_croped_label",name="predict",exist_ok=False,conf=0.5,save_crop=True,classes=1)
             # print("ObjectDetection_results.names",ObjectDetection_results)
 
             # ******* YOLO v8 ********
-            print("LabelDetection_result",LabelDetection_result)
+            print(f"image{i}",type(LabelDetection_result[0]))
+            print(f"image{i}",len(LabelDetection_result[0]))
+            print(f"image{i}",LabelDetection_result[0].names)
+            #ラベルがないときLabelDetection_result[0]のlenが０になる
             #きゅうりの本数をリストに格納
             for result in ObjectDetection_results:
                 self.detectNumList.append(len(result))

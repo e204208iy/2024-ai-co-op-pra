@@ -10,7 +10,7 @@ from flet import (
     icons,
     colors,
 )
-# from desktop_app.ai_utils.createNumOnlyClass import NoUseOCR_createCSV
+from desktop_app.ai_utils.NoUseOCR_createCSV import CreateNumCsv
 from desktop_app.ai_utils.CreateCSVClass import CreateCSVClass
 
 from desktop_app.flet_utils.flet_header import AppHeader
@@ -43,6 +43,7 @@ def main(page: Page):
     def get_directory_result(e: FilePickerResultEvent):
         directory_path.value = e.path if e.path else "Cancelled!"
         create_csv = CreateCSVClass(directory_path.value)
+        # create_csv = CreateNumCsv(directory_path.value)
         create_csv.create_csv()
 
         directory_path.update()
